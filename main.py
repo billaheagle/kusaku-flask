@@ -1,11 +1,12 @@
 import os
 import shutil
-from app import app
 from flask import Flask, request, render_template, jsonify
 from static.convert import convert_to_image
 from static.predict import predict_image
+from static.storage import send_to_storage
 
 IMAGES, TOKEN, RESULT = None, None, None
+app=Flask(__name__)
 
 @app.route('/')
 def upload_form():
@@ -40,9 +41,21 @@ def get_request():
 
     try:
         RESULT = predict_image(images_path)
-        return {'status': True, 'images_path': images_path, 'message': 'Successfully detect image', 'result': RESULT}
     except:
         return {'status': False, 'message': 'Cant predict JSON'}
+
+    try:
+        send_to_storage(image_path)
+    except:
+        print('cant send to storage')
+
+    upload_path = 'uploaded/images/'
+    token_path = os.path.join(upload_path, TOKEN)
+
+    if os.path.exists(token_path):
+        shutil.rmtree(token_path)
+
+    return {'status': True, 'images_path': images_path, 'message': 'Successfully detect image', 'result': RESULT}
 
 @app.route('/result', methods=['GET'])
 def send_result():
@@ -64,13 +77,8 @@ def send_result():
     temp_result = RESULT
     IMAGES, TOKEN, RESULT = None, None, None
 
-    upload_path = 'uploaded/images/'
-    token_path = os.path.join(upload_path, token)
-
-    if os.path.exists(token_path):
-		shutil.rmtree(token_path)
-
     return {'status': True, 'message': 'Successfully detect and predict image and your prediction result has been deleted from the system', 'result': temp_result}
 
+
 if __name__ == "__main__":
-    app.run()
+    app.run(host='0.0.0.0', port=5000)

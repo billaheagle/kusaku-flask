@@ -39,15 +39,13 @@ def detect_face(frame):
     return results
 
 def predict_image(images_path):
-    final_resutls = {}
+    final_resutls = {"Angry": 0, "Disgust": 0, "Fear": 0, "Happy": 0, "Neutral": 0, "Sad": 0, "Surprise": 0}
 
     for image in images_path:
         frame = cv2.imread(image)
         res = detect_face(frame)
 
         for r in res:
-            if r not in final_resutls:
-                final_resutls[r] = 0
             final_resutls[r] += 1
         
     return final_resutls
